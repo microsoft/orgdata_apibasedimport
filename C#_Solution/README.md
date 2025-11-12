@@ -1,6 +1,6 @@
 # Organizational-Data-Uploading-App
 
-Whenever it exports the CSV file from your source system, have your custom export app automatically run the OrganizationalDataUploadApp. Clone the OrganizationalDataUploadApp to your machine by running the following command: `git clone https://github.com/microsoft/modis_ingressupload.git`.
+Whenever it exports the CSV file from your source system, have your custom export app automatically run the OrganizationalDataUploadApp. Clone the OrganizationalDataUploadApp to your machine by running the following command: `git clone https://github.com/microsoft/orgdata_apibasedimport.git`.
 
 ## Setting up Data Ingestion
 1. Start by reviewing details of the [API based Data Import Connector](https://go.microsoft.com/fwlink/?linkid=2337669).
