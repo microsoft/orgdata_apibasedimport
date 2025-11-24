@@ -1,27 +1,45 @@
-# Organizational-Data-Uploading-App
+# C# Application to Push Data Using the Descriptive Data Upload Api 
 
-Whenever it exports the CSV file from your source system, have your custom export app automatically run the OrganizationalDataUploadApp. Clone the OrganizationalDataUploadApp to your machine by running the following command: `git clone https://github.com/microsoft/orgdata_apibasedimport.git`.
-
-## Setting up Data Ingestion
-1. Start by reviewing details of the [API based Data Import Connector](https://go.microsoft.com/fwlink/?linkid=2337669).
-2. Follow the instructions listed to register a new app in Azure. Note the **Application ID**.
-3. Review instructions for [Setting up mapping and sharing](https://go.microsoft.com/fwlink/?linkid=2328300) to understand how you can map your source system attributes names to corresponding reserved attributes names and also specify details of attribute sharing. 
-4. If you haven't downloaded the CSV template for importing organizational data during connector setup , you can download it [here](https://go.microsoft.com/fwlink/?linkid=2327001&clcid=0x409). 
-5. Identify the attributes you want to import, this can include attributes you want to ingest as reserved attributes as well as custom attributes. 
-6. Create a CSV file containing the source attribute names of the attributes you want to ingest from your system. 
-7. Logon to Microsoft Admin Center and navigate to [Organizational Data in M365](https://admin.cloud.microsoft/#/featureexplorer/migration/OrganizationalDataInM365) and 
-Follow the instructions and set up a **API Based Connector**.
-8. Note the **scale unit** associated with your tenant.
+Compile the C# application to generate the program executable **OrganizationalDataUploadApp.exe**
 
 
-## Setting up your export App
-1. Run the custom export app runs the OrganizationalDataUploadApp, a console pops up asking you for the following inputs: 
+## Running the data export App
+1. Make sure you have following information with you
+    - **Entra App ID** - Find this ID in the registered Entra app information on the Azure portal under **Application (client) ID**
+    - **CSV filepath** containing the organizational data extracted from the HRIS System.
+    - **Certificate Name** configured in your registered application. After you upload the certificate, the certificate name shows up under **Description** in the Azure Portal.
+    - **scale unit** noted during connector setup.
+    - **Tenant ID** of your Tenant - Find this ID on the app's overview page under **Directory (tenant) ID**.
+2. Run the OrganizationalDataUploadApp executable, a console pops up asking you for the following inputs: 
+    - AppId/Client ID - Enter the **Entra App ID**
+    - Absolute path to the CSV file (Example: `C:\\Users\\JaneDoe\\OneDrive - Microsoft\\Desktop\\data.csv`) - Enter the **CSV filepath**
+    - Azure Active Directory (AAD) Tenant ID - Enter the **Tenant ID**
+    - Certificate name for your registered application - Enter the **Certificate Name**
 
-1.	App (client) ID. Find this ID in the registered app information on the Azure portal under **Application (client) ID**. If you haven’t created and registered your app yet, follow the instructions in our main data import documentation, under Register a new app in Azure.
+## Expected Behavior
 
-2.	Path to the zip folder or the single csv/json data file. Format the path like this: `C:\\Users\\JaneDoe\\OneDrive - Microsoft\\Desktop\\info.zip`.
+This is the sample API call made by the application.
+``` 
+Method: POST
+RequestUri: https://api.orginsights.viva.office.com/v1.0/tenants/<tenantId>/modis/connectors/HR/ingestions/fileIngestion
+Version: 1.0
+Content: System.Net.Http.MultipartFormDataContent
+Headers:
+  {
+    Accept: application/json
+    x-nova-scaleunit: OrgDataIngestionwus2-02
+    Authorization: Bearer <bearer token from ClientID and client certificate/secret>"
+    Content-Length: 729
+  }
+  Content: <csv file>
+``` 
+Sample response: 
+```
+ {"FriendlyName":"Data ingress","Id":"<ingestion Id>","ConnectorId":"<connector Id>","Submitter":"System","StartDate":"2023-05-08T19:07:07.4994043Z","Status":"NotStarted","ErrorDetail":null,"EndDate":null,"Type":"FileIngestion"}
+```
 
-3.	Azure Active Directory tenant ID. Also find this ID on the app's overview page under **Directory (tenant) ID**.
-
-4.	Certificate name. This name is configured in your registered application. If you haven’t created a certificate yet, refer to [How to create a self-signed certificate](https://learn.microsoft.com/azure/active-directory/develop/howto-create-self-signed-certificate). After you upload the certificate, the certificate name shows up under **Description** in the Azure Portal.
-5. Ingress Data Type: `HR` or `Survey`
+**Possible errors in the API**
+1. Missing header <Authorization>: Response status 403 
+2. Missing file: Response status 500
+3. Expired Authorization header: Response status 200, but the response will suggest to sign in again 
+4. If the data.csv have incorrect data (i.e mismatch in the fieldnames/number of fields, empty fields, etc ): the response status will be 200, but the ingestion will be stuck in "ValidationFailed" state

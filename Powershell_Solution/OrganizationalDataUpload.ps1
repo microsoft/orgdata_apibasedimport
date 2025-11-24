@@ -9,7 +9,7 @@
    App (client) ID. Find this ID in the registered app information on the Azure portal under **Application (client) ID**. If you haven't created and registered your app yet, follow the instructions in our main data import documentation, under Register a new app in Azure.
 
  .Parameter pathToFile
-   Format the path like this: `C:\\Users\\JaneDoe\\OneDrive - Microsoft\\Desktop\\info.csv`. File should be an utf-8 encoded CSV file.
+   Format the path like this: `C:\\Users\\JaneDoe\\OneDrive - Microsoft\\Desktop\\data.csv`. File should be an utf-8 encoded CSV file.
 
  .Parameter TenantId
     Azure Active Directory tenant ID. Also find this ID on the app's overview page under **Directory (tenant) ID**.

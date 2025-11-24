@@ -30,7 +30,7 @@ namespace HttpClientCallerApp
                 Console.WriteLine("AppId/Client ID:");
                 appId = Console.ReadLine() ?? appId;
 
-                Console.WriteLine("\nPlease enter the absolute path to the file you wish to upload.\nFor example: C:\\\\Users\\\\JaneDoe\\\\OneDrive - Microsoft\\\\Desktop\\\\info.csv");
+                Console.WriteLine("\nAbsolute path to the CSV file: (Example: C:\\\\Users\\\\JaneDoe\\\\OneDrive - Microsoft\\\\Desktop\\\\info.csv)");
                 pathToFile = Console.ReadLine() ?? pathToFile;
 
                 Console.WriteLine("\nAzure Active Directory (AAD) Tenant ID:");
