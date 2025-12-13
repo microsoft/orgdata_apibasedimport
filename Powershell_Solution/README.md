@@ -26,7 +26,7 @@ or go to https://www.powershellgallery.com/packages/MSAL.PS for instructions on 
 
 Go to the specific folder 
 
-``` cd orgdata_apibasedupload/Powershell_Solution``` 
+``` cd orgdata_apibasedimport/Powershell_Solution``` 
 
 Run the script with parameters in PowerShell terminal 
 
