@@ -21,7 +21,7 @@ In order to set up the C# application or Powershell script, execute the followin
 ```
 
 ## Setting up Data Ingestion
-1. Start by reviewing details of the [API based Data Import Connector](https://go.microsoft.com/fwlink/?linkid=2337669).
+1. Start by reviewing details of the [API based Data Import Connector](/viva/import-org-data-api).
 2. Follow the instructions listed in [Register an App](https://go.microsoft.com/fwlink/?linkid=2333489&clcid=0x409) to register a new app in Azure. Follow instructions from step 1 to set up authentication for the Entra Application. Note the **Application ID**. Additionally note the **Client Secret** or **Certificate Name** based on the authentication method you plan to use.
 3. If you haven't downloaded the CSV template for setting up organizational data file, you can download it [here](https://go.microsoft.com/fwlink/?linkid=2327001&clcid=0x409). 
 4. Identify the attributes you want to import, this includes attributes you want to ingest as reserved attributes as well as custom attributes. 
