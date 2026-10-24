@@ -51,6 +51,11 @@ param
 
 );
 
+$fileExtension = [System.IO.Path]::GetExtension($pathToFile).ToLowerInvariant()
+if ($fileExtension -ne ".csv") {
+        throw "Only CSV (.csv) files are supported."
+}
+
 import-Module -Name MSAL.PS
 Add-Type -AssemblyName System.Net.Http
 
@@ -168,22 +173,10 @@ try {
        
         $client.DefaultRequestHeaders.Add('x-nova-scaleunit', $appScaleUnit);
         
-        $fileExtension = [System.IO.Path]::GetExtension($pathToFile).ToLower()
         $fileStream = [System.IO.File]::OpenRead($pathToFile)
-        $fileName = [System.IO.Path]::GetFileName($pathToFile)
-
-        if ($fileExtension -eq ".csv") {
-                $content = New-Object System.Net.Http.StreamContent($fileStream)
-                $content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("text/csv")
-                Write-Host "Uploading CSV file" -ForegroundColor Green
-        }
-        else {
-                $content = New-Object System.Net.Http.MultipartFormDataContent
-                $fileContent = New-Object System.Net.Http.StreamContent($fileStream)
-                $content.Add($fileContent, "info", $fileName)
-                Write-Host "Uploading ZIP file" -ForegroundColor Green
-        }
-
+        $content = New-Object System.Net.Http.StreamContent($fileStream)
+        $content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("text/csv")
+        Write-Host "Uploading CSV file" -ForegroundColor Green
 
         $result = $client.PostAsync($OrganizationalDataUploadEndPoint, $content).Result;
         $result.EnsureSuccessStatusCode()
@@ -196,4 +189,3 @@ catch {
         Write-Host "Request Status was not successful" -ForegroundColor Red
         Write-Error $_
 }
-

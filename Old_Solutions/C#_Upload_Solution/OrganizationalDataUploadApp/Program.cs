@@ -59,6 +59,12 @@ namespace HttpClientCallerApp
 
         private async Task RunAsync(string appId, string pathToFile, string tenantId, string certName, IngressDataType ingressDataType)
         {
+            var fileExtension = Path.GetExtension(pathToFile).ToLowerInvariant();
+            if (fileExtension != ".csv" && fileExtension != ".json")
+            {
+                throw new ArgumentException("Only CSV (.csv) and JSON (.json) files are supported.", nameof(pathToFile));
+            }
+
             var appToken = await new Program().GetAppToken(tenantId, appId, certName);
             var bearerToken = string.Format("Bearer {0}", appToken);
 
@@ -97,26 +103,10 @@ namespace HttpClientCallerApp
 
             client.DefaultRequestHeaders.Add("x-nova-scaleunit", scaleUnit);
 
-            HttpContent content;
-            string fileExtension = Path.GetExtension(pathToFile).ToLower();
             var byteArray = File.ReadAllBytes(pathToFile);
-
-            if (fileExtension == ".csv")
-            {
-                content = new ByteArrayContent(byteArray);
-                content.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
-            }
-            else if (fileExtension == ".json")
-            {
-                content = new ByteArrayContent(byteArray);
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            }
-            else
-            {
-                var form = new MultipartFormDataContent();
-                form.Add(new ByteArrayContent(byteArray, 0, byteArray.Length), "info", pathToFile);
-                content = form;
-            }
+            using var content = new ByteArrayContent(byteArray);
+            content.Headers.ContentType = new MediaTypeHeaderValue(
+                fileExtension == ".csv" ? "text/csv" : "application/json");
 
             var OrganizationalDataUploadEndPoint = string.Format(
                 "{0}/tenants/{1}/modis/connectors/{2}/ingestions/fileIngestion",
