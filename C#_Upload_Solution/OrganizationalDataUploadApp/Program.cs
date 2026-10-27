@@ -138,14 +138,13 @@ namespace HttpClientCallerApp
 
             if (message.IsSuccessStatusCode)
             {
-                Console.WriteLine($"\nRequest message:\n{message.RequestMessage}");
                 string responseBody = await message.Content.ReadAsStringAsync();
                 Console.WriteLine($"\nResponse content:\n{responseBody}");
-                Console.WriteLine("\n\nUpload succeeded. Ingestion is in progress. To check status, please visit the connector page. Request and response details are above.");
+                Console.WriteLine("\n\nUpload succeeded. Ingestion is in progress. To check status, please visit the connector page. Response details are above.");
             }
             else
             {
-                Console.WriteLine($"\n\nUpload failed:\n{message.StatusCode}\n{message.ToString()}");
+                Console.WriteLine($"\n\nUpload failed:\n{message.ToString()}");
             }
         }
 
@@ -168,7 +167,7 @@ namespace HttpClientCallerApp
 
             var app = builder.Build();
             var tokenRequest = app.AcquireTokenForClient(
-                [$"{Constants.OrgDataUri}/.default"
+                [$"{Constants.OrgDataResourceId}/.default"
             ]);
             if (useCertificate)
             {

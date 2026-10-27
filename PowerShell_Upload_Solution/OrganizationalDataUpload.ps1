@@ -1,13 +1,13 @@
 <#
  .Synopsis
-    Runs the Data Descriptive upload api 
+    Calls the Org Data Upload API
     
  .Description
     This script runs a POST request to https://orgdata.svc.cloud.microsoft/v1.0/dataUpload/HR/ingestions/fileIngestion?connectorId=<connectorId>.
     ConnectorId is required.
 
  .Parameter AppId
-   App (client) ID. Find this ID in the registered app information on the Azure portal under **Application (client) ID**. If you haven't created and registered your app yet, follow the instructions in our main data import documentation, under Register a new app in Azure.
+   App (client) ID. Find this ID in the registered app information on the Azure portal under **Application (client) ID**. If you haven't created and registered your app yet, follow the documentation for API-based import.
 
  .Parameter FilePath
    Format the path like this: `C:\Users\JaneDoe\OneDrive - Microsoft\Desktop\data.csv`. File should be a utf-8 encoded CSV file.
@@ -19,16 +19,16 @@
     ID of the Connector. Find in Microsoft 365 Org Data > API-based connector page at the end of the URL.
 
  .Parameter CertificateName
-   The certificate's name (for example, orgdata-certificate for CN=orgdata-certificate). The certificate must have a private key. Either the CertificateName or the ClientSecret parameter has to be provided.
+   The certificate's name (for example, orgdata-certificate for CN=orgdata-certificate). The certificate must have a private key. Either CertificateName or ClientSecret must be provided.
 
  .Parameter ClientSecret
-    A secret string that the application uses to prove its identity when requesting a token. Either the CertificateName or the ClientSecret parameter has to be provided.
+    A secret string that the application uses to prove its identity when requesting a token. Either CertificateName or ClientSecret must be provided.
 
  .Example
-    .\OrganizationalDataUpload.ps1 -AppId "YOUR-CLIENT-ID" -FilePath "C:\repos\temp\info.csv" -TenantId "YOUR-TENANT-ID" -ConnectorId "YOUR-CONNECTOR-ID" -ClientSecret "YOUR-CLIENT-SECRET"
+    .\OrganizationalDataUpload.ps1 -AppId "YOUR-APP-ID" -FilePath "C:\your\file\path\data.csv" -TenantId "YOUR-TENANT-ID" -ConnectorId "YOUR-CONNECTOR-ID" -ClientSecret "YOUR-CLIENT-SECRET"
 
  .Example
-   .\OrganizationalDataUpload.ps1 -AppId "YOUR-CLIENT-ID" -FilePath "C:\repos\temp\info.csv" -TenantId "YOUR-TENANT-ID" -ConnectorId "YOUR-CONNECTOR-ID" -CertificateName "orgdata-certificate"
+   .\OrganizationalDataUpload.ps1 -AppId "YOUR-APP-ID" -FilePath "C:\your\file\path\data.csv" -TenantId "YOUR-TENANT-ID" -ConnectorId "YOUR-CONNECTOR-ID" -CertificateName "orgdata-certificate"
 
 #>
 
@@ -68,10 +68,10 @@ if ($fileExtension -ne ".csv") {
 Import-Module -Name MSAL.PS
 Add-Type -AssemblyName System.Net.Http
 
-$OrgDataUri = "8cfd58c1-5cd4-475d-b77f-8f41cfbf6831";
+$OrgDataResourceId = "8cfd58c1-5cd4-475d-b77f-8f41cfbf6831";
 $OrgDataApi = "https://orgdata.svc.cloud.microsoft";
 $LoginBaseUrl = "https://login.microsoftonline.com";
-$Scope = $OrgDataUri + "/.default";
+$Scope = $OrgDataResourceId + "/.default";
 $Scopes = New-Object System.Collections.Generic.List[string];
 $Scopes.Add($Scope)
 
@@ -145,7 +145,10 @@ if (-NOT(IsGuid $AppId) -or -NOT(IsGuid $TenantId) -or -NOT(IsGuid $ConnectorId)
 
 Write-Host "`nAcquiring token..." -ForegroundColor Green
 $appToken = ""
-if (-NOT([string]::IsNullOrWhitespace($CertificateName))) {
+if (-NOT([string]::IsNullOrWhitespace($CertificateName)) -and -NOT([string]::IsNullOrWhitespace($ClientSecret))) {
+        throw "Provide either CertificateName or ClientSecret, but not both."
+}
+elseif (-NOT([string]::IsNullOrWhitespace($CertificateName))) {
         $appToken = GetAppTokenFromClientCertificate $AppId $CertificateName $TenantId 
 }
 elseif (-NOT([string]::IsNullOrWhitespace($ClientSecret))) {
@@ -157,7 +160,7 @@ else {
 
 $OrganizationalDataUploadEndPoint = $OrgDataApi + "/v1.0/dataUpload/HR/ingestions/fileIngestion?connectorId=" + $ConnectorId
 
-$client = $null
+$httpClient = $null
 $fileStream = $null
 $content = $null
 $result = $null
@@ -165,22 +168,26 @@ $result = $null
 Write-Host "`nUploading CSV file..." -ForegroundColor Green
 
 try {
-        $client = New-Object System.Net.Http.HttpClient
-        $client.DefaultRequestHeaders.Accept.Clear() 
+        $httpClient = New-Object System.Net.Http.HttpClient
+        $httpClient.DefaultRequestHeaders.Accept.Clear()
         $mediaType = New-Object System.Net.Http.Headers.MediaTypeWithQualityHeaderValue "application/json"
-        $client.DefaultRequestHeaders.Accept.Add($mediaType);
-        $client.DefaultRequestHeaders.Add("Authorization", "Bearer " + $appToken);
+        $httpClient.DefaultRequestHeaders.Accept.Add($mediaType);
+        $httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + $appToken);
         
         $fileStream = [System.IO.File]::OpenRead($FilePath)
         $content = New-Object System.Net.Http.StreamContent($fileStream)
         $content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("text/csv")
 
-        $result = $client.PostAsync($OrganizationalDataUploadEndPoint, $content).GetAwaiter().GetResult();
-        $result.EnsureSuccessStatusCode()
-        Write-Host "`Response content:" -ForegroundColor Green
-        $output = $result.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        Write-Host $output
-        Write-Host "`n`nUpload succeeded. Ingestion is in progress. To check status, please visit the connector page. Request and response details are above." -ForegroundColor Green
+        $result = $httpClient.PostAsync($OrganizationalDataUploadEndPoint, $content).GetAwaiter().GetResult();
+        if ($result.IsSuccessStatusCode) {
+                Write-Host "`nResponse content:" -ForegroundColor Green
+                $output = $result.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                Write-Host $output
+                Write-Host "`n`nUpload succeeded. Ingestion is in progress. To check status, please visit the connector page. Response details are above." -ForegroundColor Green
+        }
+        else {
+                Write-Host "`n`nUpload failed:`n$($result.ToString())" -ForegroundColor Red
+        }
 }
 catch {
         Write-Host "`n`nUpload failed:" -ForegroundColor Red
@@ -196,7 +203,7 @@ finally {
         if ($null -ne $fileStream) {
                 $fileStream.Dispose()
         }
-        if ($null -ne $client) {
-                $client.Dispose()
+        if ($null -ne $httpClient) {
+                $httpClient.Dispose()
         }
 }
